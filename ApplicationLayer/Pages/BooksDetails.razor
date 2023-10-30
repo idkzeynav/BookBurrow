@@ -1,0 +1,46 @@
+﻿@page "/Details/{BookId}"
+@using ModelClass
+@using DataAccessLayer
+@using System.Collections.Generic
+@inject IJSRuntime JSRuntime
+@using System
+
+<div class="container mt-4">
+    @if (book != null)
+    {
+        <h2>@book.title</h2>
+        <p>Author: @book.author</p>
+        <p>Categories: @book.categories</p>
+        <p>Price: Rs @book.price</p>
+        <p>Availability: @book.availability</p>
+    }
+    else
+    {
+        <p>Book not found.</p>
+    }
+
+    <button @onclick="GoBack" class="btn btn-primary">Back to Search</button>
+</div>
+
+@code {
+    [Parameter] public string BookId { get; set; }
+    private ModelBookListingDetails book;
+
+    private List<ModelBookListingDetails> books; // Define a list to store books
+
+    protected override void OnInitialized()
+    {
+        int bookId;
+        if (int.TryParse(BookId, out bookId))
+        {
+            // Fetch the book details from your data source
+            books = DALBookListingDetails.GetBookListingDetails();
+            book = books.FirstOrDefault(b => b.BookId == bookId);
+        }
+    }
+
+    private void GoBack()
+    {
+        JSRuntime.InvokeVoidAsync("history.back");
+    }
+}

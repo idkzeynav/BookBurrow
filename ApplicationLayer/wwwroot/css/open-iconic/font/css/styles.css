@@ -1,0 +1,26 @@
+﻿
+.smaller-image {
+    width: auto; /* Set the width to your desired size */
+    height: auto; /* Set the height to your desired size */
+}
+
+.gradient-button {
+    background: linear-gradient(to bottom, #800080, #4B0082);
+    color: white;
+    border: none;
+    padding: 5px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+    .gradient-button:hover {
+        background: linear-gradient(to bottom, #4B0082, #800080);
+    }
+
+.Newspaper {
+    font-family: 'Newspaper Cutboy','Sans Serif Collection';
+    text-align: center;
+}
+
+
+

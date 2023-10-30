@@ -1,0 +1,96 @@
+﻿
+@inject NavigationManager nav
+@using System.Data.SqlClient;
+@using ModelClass
+@using DataAccessLayer
+@inject NavigationManager nav
+@page "/BookListing"
+
+<div class="container" style="padding-top: 1%;">
+    <div class="row">
+        <div class="col-lg-10 offset-lg-1 pt-4 pb-4 border">
+
+            <div class="mb-3 text-center mt-4">
+                <h3>Book Listing Details</h3>
+            </div>
+
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Book Name</th>
+                        <th>Author/Teacher</th>
+                        <th>Categories</th>
+                        <th>Price</th>
+                        <th>Availability</th>
+                        <th>Sellers Contact Info</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var book in books)
+                    {
+                        <tr>
+                            <td>@book.title</td>
+                            <td>@book.author</td>
+                            <td>@book.categories</td>
+                            <td>@book.price</td>
+                            <td>@book.availability</td>
+                            <td>@book.SellersNo</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            <style>
+                .gradient-button {
+                    background: linear-gradient(to bottom, #800080, #4B0082);
+                    color: white;
+                    border: none;
+                    padding: 5px 15px;
+                    border-radius: 5px;
+                    cursor: pointer;
+                }
+
+                    .gradient-button:hover {
+                        background: linear-gradient(to bottom, #4B0082, #800080);
+                    }
+            </style>
+
+            <div class="d-grid gap-2 text-center">
+
+            <button @onclick="UploadBook" class="btn gradient-button">Upload Book</button>
+            <button @onclick="UpdateBook" class="btn gradient-button">Update</button>
+            <button @onclick="DeleteBook" class="btn gradient-button">Delete</button>
+			</div>
+        
+        </div>
+    </div>
+</div>
+
+
+@code {
+    private List<ModelBookListingDetails> books;
+
+    protected override void OnInitialized()
+    {
+        // Initialize the books variable with data from your data source
+        books = DALBookListingDetails.GetBookListingDetails();
+    }
+   
+
+    public void UploadBook()
+    {
+        nav.NavigateTo("/UploadBooks", true);
+    }
+
+    public void UpdateBook()
+    {
+        nav.NavigateTo("/UpdateBook", true);
+    }
+
+    public void DeleteBook()
+    {
+        nav.NavigateTo("/DeleteBooks", true);
+    }
+
+   
+}

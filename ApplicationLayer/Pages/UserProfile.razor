@@ -1,0 +1,38 @@
+﻿@page "/UserProfile"
+@attribute [Authorize(Roles = "seller")]
+
+@using ModelClass
+@using DataAccessLayer
+
+<h3>UserProfile</h3>
+
+@if (modelUserProfiles != null)
+{
+    <table width="50%">
+        @foreach (var item in modelUserProfiles)
+        {
+            <tr>
+                <td>@item.id</td>
+                <td>@item.name</td>
+                <td>@item.email</td>
+                <td>@item.roles</td>
+            </tr>
+        }
+    </table>
+}
+
+@code {
+    List<ModelUserProfile> modelUserProfiles = new List<ModelUserProfile>();
+
+    // This method loads user profiles from the database.
+    private void LoadUserData()
+    {
+        modelUserProfiles = DALUserProfile.GetUserProfile();
+    }
+
+    // Call the method when the page is initialized.
+    protected override void OnInitialized()
+    {
+        LoadUserData();
+    }
+}

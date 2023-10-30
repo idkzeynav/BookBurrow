@@ -1,0 +1,112 @@
+﻿@page "/"
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@using System.Security.Claims
+@using ModelClass
+@using DataAccessLayer
+@using System.Collections.Generic
+
+<div class="container mt-1">
+    @if (userIsAuthenticated)
+    {
+        <div class="text-center">
+            <h1>Welcome to Our Bookstore, @userName!</h1>
+        </div>
+    }
+    else
+    {
+        <div class="text-center">
+            <h1>Welcome to Our Bookstore</h1>
+        </div>
+    }
+    <div class="row mt-4">
+        <h3>Search for Books</h3>
+        <div class="col-lg-11">
+            <input class="form-control" @bind="searchQuery" placeholder="Enter book title, author, or other keywords" />
+        </div>
+        <div class="col-lg-1 text-right">
+            <button class="btn btn-primary gradient-button" @onclick="SearchBooks">Search</button>
+        </div>
+    </div>
+    <div class="mt-3"></div>
+    <div class="row mt-2">
+        @foreach (var book in filteredBooks)
+        {
+            <div class="col-md-3 mb-4">
+                <div class="card">
+                    <img src="BookSample.jpg" class="card-img-top smaller-image" alt="Book Image">
+                    <div class="card-body">
+                        <h5 class="card-title" style="margin-bottom: 5px; font-weight: bold;">@book.title</h5>
+                        <p class="card-text" style="margin-bottom: 5px;">Author: @book.author</p>
+                        <p class="card-text" style="margin-bottom: 5px;">Price: Rs: @book.price</p>
+                        <p class="card-text" style="margin-bottom: 5px;">Availability: @book.availability</p>
+                        <a href="/Details/@book.BookId" class="btn gradient-button btn-primary text-lg-end">Details</a>
+
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    .gradient-button {
+        background: linear-gradient(to bottom, #800080, #4B0082);
+        color: white;
+        border: none;
+        padding: 5px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+        .gradient-button:hover {
+            background: linear-gradient(to bottom, #4B0082, #800080);
+        }
+</style>
+
+@code {
+    private string searchQuery = "";
+    private List<ModelBookListingDetails> books = new List<ModelBookListingDetails>(); // Define books initially
+    private List<ModelBookListingDetails> filteredBooks = new List<ModelBookListingDetails>(); // Define filteredBooks
+
+    private string userName = "Guest";
+    private bool userIsAuthenticated = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        LoadBooks(); // Load books when the component is initialized
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity.IsAuthenticated)
+        {
+            userName = user.FindFirst(ClaimTypes.Name)?.Value;
+            userIsAuthenticated = true;
+        }
+    }
+
+    private void LoadBooks()
+    {
+        // Load books from your data source
+        books = DALBookListingDetails.GetBookListingDetails();
+        // Initially, set filteredBooks to contain all books
+        filteredBooks = books;
+    }
+
+    private void SearchBooks()
+    {
+        if (string.IsNullOrWhiteSpace(searchQuery))
+        {
+            // If no search query is entered, show all books
+            filteredBooks = books;
+        }
+        else
+        {
+            // Filter books based on the search query
+            filteredBooks = books.Where(book =>
+                book.title.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ||
+                book.author.Contains(searchQuery, StringComparison.OrdinalIgnoreCase)).ToList();
+        }
+    }
+}

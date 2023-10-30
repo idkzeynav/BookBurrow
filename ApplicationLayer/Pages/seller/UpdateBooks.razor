@@ -1,0 +1,137 @@
+﻿@page "/UpdateBook"
+@using System.Data.SqlClient
+@using ModelClass
+@using DataAccessLayer
+@attribute [Authorize(Roles = "seller")]
+
+<h3>Update a Book</h3>
+<form class="form-horizontal">
+    <div class="form-group">
+        <label for="selectedTitle" class="col-sm-4 control-label">Select Book:</label>
+        <div class="col-sm-8">
+            <select class="form-control" id="selectedTitle" @bind="searchTitle">
+                @foreach (var book in books)
+                {
+                    <option value="@book.title">@book.title</option>
+                }
+            </select>
+        </div>
+    </div>
+    <div class="form-group">
+        <div class="col-sm-offset-4 col-sm-8">
+            <button type="button" class="btn btn-primary" @onclick="SearchBook">Search</button>
+        </div>
+    </div>
+</form>
+
+
+@if (updateMode)
+{
+    <form>
+        <div class="form-group">
+            <label for="title">Title:</label>
+            <input type="text" class="form-control" id="title" @bind="book.title">
+        </div>
+        <div class="form-group">
+            <label for="author">Author:</label>
+            <input type="text" class="form-control" id="author" @bind="book.author">
+        </div>
+        <div class="form-group">
+            <label for="categories">Categories:</label>
+            <select class="form-control" id="categories" @bind="book.categories">
+                <option value="Medicine">Medicine</option>
+                <option value="Tech">Tech</option>
+                <option value="Maths">Maths</option>
+                <option value="Literature">Literature</option>
+                <option value="Other">Other</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="price">Price:</label>
+            <div class="input-group">
+                <input type="number" class="form-control" id="price" @bind="book.price" disabled="@isPriceFree" step="100">
+                <div class="input-group-append">
+                    <div class="input-group-text">
+                        <input type="checkbox" @bind="isPriceFree"> Free
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="availability">Availability:</label>
+            <select class="form-control" id="availability" @bind="book.availability">
+                <option value="On Hold">On Hold</option>
+                <option value="Available">Available</option>
+                <option value="Sold">Sold</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="SellersNo">Seller's Number:</label>
+            <input type="text" class="form-control" id="SellersNo" @bind="book.SellersNo">
+        </div>
+        <button type="button" class="btn btn-primary" @onclick="UpdateBook">Update</button>
+    </form>
+}
+
+@if (updateSuccess)
+{
+    <div class="alert alert-success">Book updated successfully!</div>
+}
+
+@code {
+    private List<ModelBookListingDetails> books = new List<ModelBookListingDetails>();
+    private string searchTitle;
+    private ModelBookListingDetails book = new ModelBookListingDetails();
+    private bool isPriceFree;
+    private bool updateMode;
+    private bool updateSuccess;
+
+    protected override void OnInitialized()
+    {
+        // Fetch the list of books for the dropdown
+        books = DALBookListingDetails.GetBookListingDetails();
+    }
+
+    private void SearchBook()
+    {
+        // Implement search logic to find the book by title
+        var foundBook = books.FirstOrDefault(b => b.title == searchTitle);
+
+        if (foundBook != null)
+        {
+            book = foundBook;
+            updateMode = true;
+        }
+        else
+        {
+            // Handle the case where the book is not found
+            // You can display an error message or take appropriate action.
+        }
+    }
+    private void UpdateBook()
+    {
+        if (isPriceFree)
+        {
+            book.price = 0;
+        }
+
+        bool success = DALBookListingDetails.UpdateBook(book);
+
+        if (success)
+        {
+            updateSuccess = true;
+            if (book.availability == "Sold")
+            {
+                DALBookListingDetails dal = new DALBookListingDetails();
+                dal.DeleteBookListing(book.title);
+            }
+        }
+        else
+        {
+            // Handle update failure
+            // You can display an error message or take appropriate action.
+        }
+    }
+    
+    
+}

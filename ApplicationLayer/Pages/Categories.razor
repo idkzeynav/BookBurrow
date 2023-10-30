@@ -1,0 +1,91 @@
+﻿@page "/Categories"
+@using ModelClass
+@using DataAccessLayer
+@using System.Collections.Generic
+
+<h3>Books by Category</h3>
+
+<div class="row">
+    <div class="col-lg-11">
+        <select class="form-control" @bind="selectedCategory">
+            <option value="All">All Categories</option>
+            @foreach (var category in distinctCategories)
+            {
+                <option value="@category">@category</option>
+            }
+        </select>
+    </div>
+    <div class="col-lg-1 text-right">
+        <button class="btn btn-primary gradient-button" @onclick="FilterBooks">Filter</button>
+    </div>
+</div>
+
+
+<div class="mt-3">
+  <div class="alert alert-warning" style="background-color: purple; color: white;">
+         Register to see sellers' contact info!
+            </div>
+        </div>
+ 
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Book Name</th>
+            <th>Author/Teacher</th>
+            <th>Categories</th>
+            <th>Price</th>
+            <th>Availability</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var book in filteredBooks)
+        {
+            <tr>
+                <td>@book.title</td>
+                <td>@book.author</td>
+                <td>@book.categories</td>
+                <td>@book.price</td>
+                <td>@book.availability</td
+            </tr>
+        }
+    </tbody>
+</table>
+
+
+  <style>
+                .gradient-button {
+                    background: linear-gradient(to bottom, #800080, #4B0082);
+                    color: white;
+                    border: none;
+                    padding: 5px 15px;
+                    border-radius: 5px;
+                    cursor: pointer;
+                }
+
+                    .gradient-button:hover {
+                        background: linear-gradient(to bottom, #4B0082, #800080);
+                    }
+            </style>
+@code {
+    private string selectedCategory = "All";
+    private List<string> distinctCategories;
+    private List<ModelBookListingDetails> filteredBooks;
+
+    protected override void OnInitialized()
+    {
+        distinctCategories = DALBookListingDetails.GetDistinctCategories();
+        FilterBooks();
+    }
+
+    private void FilterBooks()
+    {
+        if (selectedCategory == "All")
+        {
+            filteredBooks = DALBookListingDetails.GetBookListingDetails();
+        }
+        else
+        {
+            filteredBooks = DALBookListingDetails.GetBooksByCategory(selectedCategory);
+        }
+    }
+}

@@ -1,0 +1,142 @@
+﻿@page "/register"
+@using System.Data.SqlClient
+@using ApplicationLayer.Authentication
+@inject IJSRuntime JSRuntime
+@inject NavigationManager NavigationManager
+
+@inject UserAccountService userAccountService
+@inject IJSRuntime js
+@inject AuthenticationStateProvider authstateprovider
+@inject NavigationManager nav
+@using DataAccessLayer
+
+@*<h3>Registration</h3>*@
+
+<div class="container" style="padding-top: 5%;">
+    <div class="row">
+        <div class="col-lg-4 offset-lg-4 pt-4 pb-4 border">
+            <div class="mb-3 text-center">
+                <h3>Registration</h3>
+            </div>
+
+            <form>
+                <div class="mb-3">
+                    <label for="name">Name</label>
+                    <input @bind="name" class="form-control" id="name" type="text" />
+                </div>
+
+                <div class="mb-3">
+                    <label for="email">Email</label>
+                    <input @bind="email" class="form-control" id="email" type="email" />
+                </div>
+
+                <div class="mb-3">
+                    <label for="password">Password</label>
+                    <input @bind="password" class="form-control" id="password" type="password" />
+                </div>
+
+                <div class="mb-3">
+                    <label for="role">Role</label>
+                    <select @bind="role" class="form-control" id="role">
+                        <option value="buyer">Buyer</option>
+                        <option value="seller">Seller</option>
+                    </select>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button @onclick="Register" class="btn btn-primary gradient-button">Register Now</button>
+                    <button @onclick="Login" class="btn btn-secondary gradient-button">Login</button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+<style>
+    .gradient-button {
+        background: linear-gradient(to bottom, #800080, #4B0082);
+        color: white;
+        border: none;
+        padding: 5px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+        .gradient-button:hover {
+            background: linear-gradient(to bottom, #4B0082, #800080);
+        }
+</style>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
+@code {
+    private string name;
+    private string email;
+    private string password;
+    private string role = "buyer";
+    private string errorMessage;
+
+    private async Task Register()
+    {
+        if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Email and Password are required.");
+            return;
+        }
+
+        if (IsEmailUnique(email))
+        {
+            InsertUserIntoDatabase(name, email, password, role);
+            NavigationManager.NavigateTo("/login");
+        }
+        else
+        {
+            errorMessage = "Email is already in use. Please choose a different one.";
+        }
+    }
+
+    private bool IsEmailUnique(string email)
+    {
+        using (var connection = new SqlConnection("Data Source=LAPTOP-5R2C9PR6\\SQLEXPRESS;Initial Catalog=zainab;Integrated Security=True"))
+        {
+            connection.Open();
+            using (var command = new SqlCommand("SELECT COUNT(*) FROM UserProfile WHERE email = @email", connection))
+            {
+                command.Parameters.AddWithValue("@email", email);
+                int count = (int)command.ExecuteScalar();
+                return count == 0;
+            }
+        }
+    }
+
+    private void InsertUserIntoDatabase(string name, string email, string password, string role)
+    {
+        string connectionString = "Data Source=LAPTOP-5R2C9PR6\\SQLEXPRESS;Initial Catalog=zainab;Integrated Security=True";
+
+        using (SqlConnection connection = new SqlConnection(connectionString))
+        {
+            connection.Open();
+
+            string query = "INSERT INTO UserProfile (name, email, password, roles) VALUES (@name, @email, @password, @roles)";
+
+            using (SqlCommand command = new SqlCommand(query, connection))
+            {
+                command.Parameters.AddWithValue("@name", name);
+                command.Parameters.AddWithValue("@email", email);
+                command.Parameters.AddWithValue("@password", password);
+                command.Parameters.AddWithValue("@roles", role);
+
+                command.ExecuteNonQuery();
+            }
+        }
+    }
+
+    public void Login()
+    {
+        nav.NavigateTo("/login", true);
+    }
+
+}
