@@ -1,8 +1,9 @@
-﻿@using System.Data.SqlClient;
+﻿@page "/UploadBooks"
 @using ModelClass
 @using DataAccessLayer
 @attribute [Authorize(Roles = "seller")]
-@page "/UploadBooks"
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@using System.Security.Claims;
 
 
 <h3>Upload a Book</h3>
@@ -32,9 +33,8 @@
             </select>
         </div>
     </div>
-
     <div class="form-group">
-        <label for "price" class="col-sm-4 control-label">Price:</label>
+        <label for="price" class="col-sm-4 control-label">Price:</label>
         <div class="col-sm-8">
             <div class="input-group">
                 <input type="number" class="form-control" id="price" @bind="book.price" disabled="@isPriceFree" step="100">
@@ -61,42 +61,77 @@
             <input type="text" class="form-control" id="SellersNo" @bind="book.SellersNo">
         </div>
     </div>
+    <input type="hidden" id="SellerId" @bind="book.SellerId" />
+  
+    <div class="form-group">
+        <label for="Location" class="col-sm-4 control-label">Location:</label>
+        <div class="col-sm-8">
+            <select class="form-control" id="Location" @bind="book.Location">
+                <option value="Karachi">Karachi</option>
+                <option value="Lahore">Lahore</option>
+                <option value="Islamabad">Islamabad</option>
+                <option value="Nawabshah">Nawabshah</option>
+                <option value="Other">Other</option>
+            </select>
+        </div>
+     </div>
     <div class="form-group">
         <div class="col-sm-offset-4 col-sm-8">
             <button type="button" class="btn btn-primary" @onclick="UploadBook">Upload</button>
         </div>
     </div>
-</form>
-
+  </form> 
 
 @if (uploadSuccess)
 {
     <div class="alert alert-success">Book uploaded successfully!</div>
 }
 
+
+
 @code {
     private ModelBookListingDetails book = new ModelBookListingDetails();
     private bool isPriceFree;
     private bool uploadSuccess;
 
-    private void UploadBook()
+    private async Task UploadBook()
     {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
         if (isPriceFree)
         {
-            book.price = 0; 
+            book.price = 0;
         }
+        if (int.TryParse(user.FindFirstValue(ClaimTypes.NameIdentifier), out int userId))
+        {
+            book.SellerId = userId;
+        }
+        else { }
 
-        bool success = DALBookListingDetails.InsertBookListing(book.title, book.author, book.categories, book.price, book.availability, book.SellersNo);
+        // use users id as seller id for messaging purpose
+        book.SellerUsername = user.FindFirstValue(ClaimTypes.Name);
+
+        bool success = DALBookListingDetails.InsertBookListing(
+            book.title,
+            book.author,
+            book.categories,
+            book.price,
+            book.availability,
+            book.SellersNo,
+            book.SellerId,
+            book.SellerUsername,
+            book.Location
+        );
+
         if (success)
         {
             uploadSuccess = true;
-
         }
         else
         {
-            // Handle upload failure
+           
         }
     }
-
-    
 }
+

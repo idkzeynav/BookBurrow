@@ -1,4 +1,6 @@
-﻿@using ApplicationLayer.Authentication
+﻿
+@*@using ApplicationLayer.Authentication
+@using System.Security.Claims
 @inject AuthenticationStateProvider aus
 @inject NavigationManager nm
 @inject IJSRuntime js
@@ -21,8 +23,11 @@
                 </NavLink>
             </div>
 
-            
-
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="Categories">
+                    <span class="oi oi-list" aria-hidden="true"></span> Categories
+                </NavLink>
+            </div>
 
             <AuthorizeView Roles="seller">
 				<Authorized>
@@ -31,11 +36,8 @@
 							<span class="oi oi-book" aria-hidden="true"></span> Book Details
 						</NavLink>
 					</div>
-                    <div class="nav-item px-3">
-                        <NavLink class="nav-link" href="UserProfile">
-                            <span class="oi oi-person" aria-hidden="true"></span> UserProfile
-                        </NavLink>
-                    </div>
+
+                    
 
                     <NavLink class="nav-link">
                         <button @onclick="Logout">Logout</button>
@@ -43,27 +45,15 @@
                 </Authorized>
 
                 <NotAuthorized>
-                    <div class="nav-item px-3">
-                        <NavLink class="nav-link" href="Categories">
-                            <span class="oi oi-list" aria-hidden="true"></span> Categories
-                        </NavLink>
-                    </div>
 
                     <div class="nav-item px-3">
                         <NavLink class="nav-link" href="Register">
                             <span class="oi oi-account-login" aria-hidden="true"></span> Register
                         </NavLink>
-                    </div>
-
-                    <div class="nav-item px-3">
-                        <NavLink class="nav-link" href="Itemsinfo">
-                            <span class="oi oi-paperclip" aria-hidden="true"></span> ItemsInfo
-                        </NavLink>
-                    </div>
+                    </div>               
+                  
                 </NotAuthorized>
             </AuthorizeView>
-
-
 
             <AuthorizeView Roles="buyer">
                 <Authorized>
@@ -79,6 +69,21 @@
                     </NavLink>
                 </Authorized>
             </AuthorizeView>
+
+            <AuthorizeView Roles="Admin">
+                <Authorized>
+
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="adminpage">
+                            <span class="oi oi-book" aria-hidden="true"></span> Dashboard
+                        </NavLink>
+                    </div>
+                  
+                        <NavLink class="nav-link">
+                            <button @onclick="Logout">Logout</button>
+                        </NavLink>
+                </Authorized>
+             </AuthorizeView>
         </CascadingAuthenticationState>
     </nav>
 </div>
@@ -98,4 +103,64 @@
     {
         collapseNavMenu = !collapseNavMenu;
     }
+   
+    private async Task SelectSeller()
+    {
+        // Get the authenticated user's information
+        var authState = await aus.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        // Use the user's ID as the selected seller's ID
+        var selectedSellerId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        // Now, navigate to the Inbox page with the selected seller's ID
+        nm.NavigateTo($"/seller-chat/{selectedSellerId}");
+    }
+}*@
+
+@using ApplicationLayer.Authentication
+@using System.Security.Claims
+@inject AuthenticationStateProvider aus
+@inject NavigationManager nm
+@inject IJSRuntime js
+
+
+<div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
+    <div class="flex-row">
+        <NavLink class="nav-item px-3 nav-link" href="" Match="NavLinkMatch.All">
+            <span class="oi oi-home" aria-hidden="true"></span> Home
+        </NavLink>
+
+        <NavLink class="nav-item px-3 nav-link" href="Categories">
+            <span class="oi oi-list" aria-hidden="true"></span> Categories
+        </NavLink>
+
+        <AuthorizeView>
+            <Authorized>
+                <NavLink class="nav-item px-3 nav-link" href="BookListing">
+                    <span class="oi oi-book" aria-hidden="true"></span> Book Details
+                </NavLink>
+
+                <button class="nav-link" @onclick="Logout">Logout</button>
+            </Authorized>
+        </AuthorizeView>
+    </div>
+</div>
+@code {
+    private bool collapseNavMenu = true;
+
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private async Task Logout()
+    {
+        var cas = (CustomAuthenticationStateProvider)aus;
+        await cas.UpdateAuthenticationStae(null);
+        nm.NavigateTo("login");
+    }
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
 }
+

@@ -1,0 +1,28 @@
+﻿@page "/inbox/details/{MessageId}"
+@using ModelClass
+@using DataAccessLayer
+<div class="container mt-4">
+    <h2>Message Details</h2>
+
+    <p><strong>Message ID:</strong> @MessageId</p>
+    <p><strong>Sender ID:</strong> @message.SenderId</p>
+    <p><strong>Receiver ID:</strong> @message.ReceiverId</p>
+    <p><strong>Content:</strong> @message.Content</p>
+    <p><strong>Timestamp:</strong> @message.Timestamp</p>
+    <!-- Add more details based on your message model -->
+
+    <a href="/inbox">Back to Inbox</a>
+</div>
+
+@code {
+    [Parameter]
+    public int MessageId { get; set; }
+
+    private Message message;
+
+    protected override void OnInitialized()
+    {
+        // Fetch the message details from the database based on MessageId
+        message = DALMessage.GetMessageDetails(MessageId);
+    }
+}

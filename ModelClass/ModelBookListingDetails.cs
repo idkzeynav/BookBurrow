@@ -23,6 +23,13 @@ namespace ModelClass
  
         public string? SellersNo { get; set; }
 
+        public string? Location { get; set; }
+
+        public string? BImage { get; set; }
+
+        //seller information for chatting add it later also add it back in dbms
+        public int SellerId { get; set; }  
+        public string SellerUsername { get; set; }
 
     }
 }

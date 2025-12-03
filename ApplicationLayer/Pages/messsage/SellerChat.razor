@@ -1,0 +1,169 @@
+﻿@page "/seller-chat/{SellerId}"
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@using System.Data.SqlClient
+@using ModelClass
+@using DataAccessLayer
+
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+
+@*<AuthorizeView>
+    <Authorized>
+        <div class="chat-container">
+            <div class="chat-messages">
+                @foreach (var message in messages)
+                {
+                    <div class="message">
+                        <strong>@message.Sender:</strong> @message.Content
+                    </div>
+                }
+            </div>
+        </div>
+
+
+        <div class="chat-input">
+            <input type="text" @bind="newMessage" @onkeyup="HandleKeyPress" placeholder="Type your message..." />
+            <button @onclick="SendMessage">Send</button>
+        </div>
+    </Authorized>
+    <NotAuthorized>
+        <p>You are not authorized to access this page.</p>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    private List<ChatMessage> messages = new List<ChatMessage>();
+    private string newMessage = "";
+
+    [Parameter]
+    public string SellerId { get; set; }
+    private string userName;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity.IsAuthenticated)
+        {
+            userName = user.Identity.Name;
+        }
+        else
+        {
+            userName = "Unknown";
+        }
+    }
+
+    private async Task SendMessage()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        var senderId = Convert.ToInt32(user.FindFirstValue(ClaimTypes.NameIdentifier));
+        var receiverId = Convert.ToInt32(SellerId); // Update this logic based on your requirements
+
+        if (!string.IsNullOrWhiteSpace(newMessage))
+        {
+            messages.Add(new ChatMessage { Sender = userName, Content = newMessage });
+            newMessage = "";
+
+            // Save the message to the database
+            DALMessage.InsertMessage(senderId, receiverId, newMessage);
+        }
+    }
+
+    private void HandleKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            SendMessage();
+        }
+    }
+
+    private class ChatMessage
+    {
+        public string Sender { get; set; } = ""; // Default value to an empty string
+        public string Content { get; set; }
+    }
+}*@
+
+
+<AuthorizeView>
+    <Authorized>
+        <div class="chat-container">
+            <div class="chat-messages">
+                @foreach (var message in messages)
+                {
+                    <div class="message">
+                        <strong>@message.Sender:</strong> @message.Content
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="chat-input">
+            <input type="text" @bind="newMessage" @onkeyup="HandleKeyPress" placeholder="Type your message..." />
+            <button @onclick="SendMessage">Send</button>
+        </div>
+    </Authorized>
+    <NotAuthorized>
+        <p>You are not authorized to access this page.</p>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    private List<ChatMessage> messages = new List<ChatMessage>();
+    private string newMessage = "";
+
+    [Parameter]
+    public string SellerId { get; set; }
+    private string userName;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity.IsAuthenticated)
+        {
+            userName = user.Identity.Name;
+        }
+        else
+        {
+            userName = "Unknown";
+        }
+    }
+
+    private async Task SendMessage()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        var senderId = Convert.ToInt32(user.FindFirstValue(ClaimTypes.NameIdentifier));
+        var receiverId = Convert.ToInt32(SellerId);
+
+        if (!string.IsNullOrWhiteSpace(newMessage))
+        {
+            messages.Add(new ChatMessage { Sender = userName, Content = newMessage });
+            newMessage = "";
+
+            // Save the message to the database
+            DALMessage.InsertMessage(senderId, receiverId, newMessage);
+        }
+    }
+
+    private void HandleKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            SendMessage();
+        }
+    }
+
+    private class ChatMessage
+    {
+        public string Sender { get; set; } = ""; // Default value to an empty string
+        public string Content { get; set; }
+    }
+}

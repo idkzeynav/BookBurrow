@@ -3,37 +3,55 @@
 @using DataAccessLayer
 @using System.Collections.Generic
 @inject IJSRuntime JSRuntime
-@using System
+@using System.Security.Claims
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager NavigationManager
 
 <div class="container mt-4">
     @if (book != null)
     {
-        <h2>@book.title</h2>
-        <p>Author: @book.author</p>
-        <p>Categories: @book.categories</p>
-        <p>Price: Rs @book.price</p>
-        <p>Availability: @book.availability</p>
+        <div>
+            <h2>@book.title</h2>
+            <p><strong>Author:</strong> @book.author</p>
+            <p><strong>Categories:</strong> @book.categories</p>
+            <p><strong>Price:</strong> Rs @book.price</p>
+            <p><strong>Availability:</strong> @book.availability</p>
+            <p><strong>Sellers No:</strong> @book.SellersNo</p>
+        </div>
+
+        @*
+        //implement this when use messgaing    
+        @if (userIsAuthenticated)
+        {
+            <button @onclick="StartChatWithSeller" class="btn btn-primary">Chat with seller</button>
+        }
+        else
+        {
+            <p><a href="login" class="btn btn-primary">Login to chat with seller</a></p>
+        }*@
+      
+
+        <button @onclick="GoBack" class="btn btn-primary">Back to Search</button>
     }
     else
     {
         <p>Book not found.</p>
     }
-
-    <button @onclick="GoBack" class="btn btn-primary">Back to Search</button>
 </div>
 
 @code {
     [Parameter] public string BookId { get; set; }
     private ModelBookListingDetails book;
+    private List<ModelBookListingDetails> books;
 
-    private List<ModelBookListingDetails> books; // Define a list to store books
+    private string userName = "Guest";
+    private bool userIsAuthenticated = false;
 
     protected override void OnInitialized()
     {
         int bookId;
         if (int.TryParse(BookId, out bookId))
         {
-            // Fetch the book details from your data source
             books = DALBookListingDetails.GetBookListingDetails();
             book = books.FirstOrDefault(b => b.BookId == bookId);
         }
@@ -43,4 +61,28 @@
     {
         JSRuntime.InvokeVoidAsync("history.back");
     }
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity.IsAuthenticated)
+        {
+            userName = user.FindFirstValue(ClaimTypes.Name);
+            userIsAuthenticated = true;
+        }
+    }
+
+    
+        private void StartChatWithSeller()
+        {
+            // Pass necessary information to the chat component
+            NavigationManager.NavigateTo($"/chat/{book.SellerId}");
+        }
+
+    
 }
+
+

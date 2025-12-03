@@ -37,7 +37,6 @@
 
     protected override void OnInitialized()
     {
-        // Fetch the list of books for the dropdown
         books = DALBookListingDetails.GetBookListingDetails();
     }
 
@@ -45,8 +44,6 @@
     {
         DALBookListingDetails dal = new DALBookListingDetails();
         dal.DeleteBookListing(selectedTitle);
-        // The DeleteBookListing method doesn't return a boolean value
-        // Optionally, you can re-fetch the book list after a successful deletion
         books = DALBookListingDetails.GetBookListingDetails();
         deleteSuccess = true;
     }

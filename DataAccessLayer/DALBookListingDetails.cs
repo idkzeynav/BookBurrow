@@ -15,7 +15,7 @@ namespace DataAccessLayer
         public static List<ModelBookListingDetails> GetBookListingDetails()
         {
             SqlConnection con = DBhelper.GetConnection();
-            SqlCommand cmd = new SqlCommand("select * from BookListingDetails ", con);
+            SqlCommand cmd = new SqlCommand("SELECT * FROM BookListingDetails", con);
             con.Open();
             SqlDataReader sqlDataReaderreader = cmd.ExecuteReader();
             List<ModelBookListingDetails> ListItems = new List<ModelBookListingDetails>();
@@ -29,11 +29,26 @@ namespace DataAccessLayer
                 modelBookListingDetails.price = Convert.ToInt32(sqlDataReaderreader["price"]);
                 modelBookListingDetails.availability = sqlDataReaderreader["availability"].ToString();
                 modelBookListingDetails.SellersNo = sqlDataReaderreader["SellersNo"].ToString();
+
+                // Check if "Location" field exists before accessing it
+                if (sqlDataReaderreader.GetSchemaTable().Columns.Contains("Location"))
+                {
+                    modelBookListingDetails.Location = sqlDataReaderreader["Location"].ToString();
+                }
+                else
+                {
+                    // Handle the case where "Location" field doesn't exist in the result set
+                    modelBookListingDetails.Location = string.Empty; // or null, depending on your needs
+                }
+
                 ListItems.Add(modelBookListingDetails);
             }
+
+
             con.Close();
             return ListItems;
         }
+
 
         public void DeleteBookListing(string title)
         {
@@ -55,7 +70,10 @@ namespace DataAccessLayer
             {
                 connection.Open();
 
-                string query = "UPDATE BookListingDetails SET title = @title, author = @author, categories = @categories, price = @price, availability = @availability, SellersNo = @SellersNo WHERE BookId = @BookId";
+                string query = "UPDATE BookListingDetails SET title = @title, author = @author, categories = @categories, " +
+                "price = @price, availability = @availability, SellersNo = @SellersNo, Location = @Location " +
+                "WHERE BookId = @BookId";
+
 
                 using (SqlCommand command = new SqlCommand(query, connection))
                 {
@@ -66,6 +84,7 @@ namespace DataAccessLayer
                     command.Parameters.AddWithValue("@availability", updatedBook.availability);
                     command.Parameters.AddWithValue("@SellersNo", updatedBook.SellersNo);
                     command.Parameters.AddWithValue("@BookId", updatedBook.BookId);
+                    command.Parameters.AddWithValue("@Location", updatedBook.Location);
 
                     int rowsAffected = command.ExecuteNonQuery();
 
@@ -75,13 +94,15 @@ namespace DataAccessLayer
             }
         }
 
-        public static bool InsertBookListing(string title, string author, string categories, int price, string availability, string SellersNo)
+        public static bool InsertBookListing(string title, string author, string categories, int price, string availability, string SellersNo, int SellerId, string SellerUsername, string Location)
         {
             using (SqlConnection connection = DBhelper.GetConnection())
             {
                 connection.Open();
 
-                string query = "INSERT INTO BookListingDetails (title, author, categories, price, availability, SellersNo) VALUES (@title, @author, @categories, @price, @availability, @SellersNo)";
+                string query = "INSERT INTO BookListingDetails (title, author, categories, price, availability, SellersNo, SellerId, SellerUsername, Location) " +
+                               "VALUES (@title, @author, @categories, @price, @availability, @SellersNo, @SellerId, @SellerUsername, @Location)";
+
 
                 using (SqlCommand command = new SqlCommand(query, connection))
                 {
@@ -91,16 +112,16 @@ namespace DataAccessLayer
                     command.Parameters.AddWithValue("@price", price);
                     command.Parameters.AddWithValue("@availability", availability);
                     command.Parameters.AddWithValue("@SellersNo", SellersNo);
+                    command.Parameters.AddWithValue("@SellerId", SellerId);
+                    command.Parameters.AddWithValue("@SellerUsername", SellerUsername);
+                    command.Parameters.AddWithValue("@Location", Location); 
 
                     int rowsAffected = command.ExecuteNonQuery();
-                    Console.WriteLine("SQL Query: " + query);
-                    // Check if the insertion was successful (assuming BookId is an identity column)
+
                     return rowsAffected > 0;
                 }
             }
         }
-
-      
         public static List<ModelBookListingDetails> GetBooksByCategory(string category)
         {
             List<ModelBookListingDetails> books = new List<ModelBookListingDetails>();
@@ -139,6 +160,45 @@ namespace DataAccessLayer
             return books;
         }
 
+        /**/public static List<ModelBookListingDetails> GetBooksByLocation(string Location)
+        {
+            List<ModelBookListingDetails> books = new List<ModelBookListingDetails>();
+
+            using (SqlConnection connection = DBhelper.GetConnection())
+            {
+                connection.Open();
+
+                string query = "SELECT * FROM BookListingDetails WHERE Location = @Location";
+
+                using (SqlCommand command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@Location", Location);
+
+                    using (SqlDataReader reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            ModelBookListingDetails foundBook = new ModelBookListingDetails
+                            {
+                                BookId = Convert.ToInt32(reader["BookId"]),
+                                title = reader["title"].ToString(),
+                                author = reader["author"].ToString(),
+                                categories = reader["categories"].ToString(),
+                                price = Convert.ToInt32(reader["price"]),
+                                availability = reader["availability"].ToString(),
+                                SellersNo = reader["SellersNo"].ToString(),
+                                Location = reader["Location"].ToString()
+                            };
+
+                            books.Add(foundBook);
+                        }
+                    }
+                }
+            }
+
+            return books;
+        }
+
         public static List<string> GetDistinctCategories()
         {
             SqlConnection con = DBhelper.GetConnection();
@@ -161,7 +221,7 @@ namespace DataAccessLayer
             return distinctCategories;
         }
 
-        public static List<ModelBookListingDetails> SearchBooks(string searchQuery)
+        /*public static List<ModelBookListingDetails> SearchBooks(string searchQuery)
         {
             List<ModelBookListingDetails> books = new List<ModelBookListingDetails>();
 
@@ -189,6 +249,49 @@ namespace DataAccessLayer
                                 price = Convert.ToInt32(reader["price"]),
                                 availability = reader["availability"].ToString(),
                                 SellersNo = reader["SellersNo"].ToString()
+                            };
+
+                            books.Add(foundBook);
+                        }
+                    }
+                }
+            }
+
+            return books;
+        }*/
+        public static List<ModelBookListingDetails> SearchBooks(string location)
+        {
+            List<ModelBookListingDetails> books = new List<ModelBookListingDetails>();
+
+            using (SqlConnection connection = DBhelper.GetConnection())
+            {
+                connection.Open();
+
+                string query = "SELECT * FROM BookListingDetails " +
+                               "WHERE (title LIKE @searchQuery OR author LIKE @searchQuery) " +
+                               "AND (Location = @location OR @location = '')";
+
+                using (SqlCommand command = new SqlCommand(query, connection))
+                {
+                    //command.Parameters.AddWithValue("@searchQuery", "%" + searchQuery + "%");
+                    command.Parameters.AddWithValue("@location", location);
+
+                    using (SqlDataReader reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            ModelBookListingDetails foundBook = new ModelBookListingDetails
+                            {
+                                BookId = Convert.ToInt32(reader["BookId"]),
+                                title = reader["title"].ToString(),
+                                author = reader["author"].ToString(),
+                                categories = reader["categories"].ToString(),
+                                price = Convert.ToInt32(reader["price"]),
+                                availability = reader["availability"].ToString(),
+                                SellersNo = reader["SellersNo"].ToString(),
+                                Location = reader["Location"].ToString(),
+                                BImage = reader["BImage"].ToString(), // Assuming BImage is a property in your ModelBookListingDetails class
+                              
                             };
 
                             books.Add(foundBook);

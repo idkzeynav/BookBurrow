@@ -1,0 +1,56 @@
+﻿@page "/inbox"
+@using ModelClass
+@using DataAccessLayer
+@using System.Data.SqlClient;
+@inject AuthenticationStateProvider aus
+@inject NavigationManager nm
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@using System.Data.SqlClient
+@using ModelClass
+@using DataAccessLayer
+
+
+
+<div class="container mt-4">
+    <h2>Inbox</h2>
+    
+    <ul>
+        @foreach (var message in incomingMessages)
+        {
+            <li>
+                <strong>@message.SenderId:</strong> @message.Content
+                <a href="/inbox/details/@message.MessageId">View Details</a>
+            </li>
+        }
+    </ul>
+</div>
+
+@code {
+    private List<Message> incomingMessages;
+
+    protected override void OnInitialized()
+    {
+        // Logic to get the recipient ID (replace this with your actual logic)
+        var recipientId = GetAuthenticatedUserId(); // Replace with your actual logic to get the recipient ID
+
+        // Fetch incoming messages for the logged-in user
+        incomingMessages = DALMessage.GetIncomingMessages(recipientId);
+    }
+
+    private int GetAuthenticatedUserId()
+    {
+        // Replace this with your actual logic to get the authenticated user's ID
+        // Example: If you're using ASP.NET Core Identity
+        var authState = aus.GetAuthenticationStateAsync().Result;
+        var user = authState.User;
+
+        if (user.Identity.IsAuthenticated)
+        {
+            return Convert.ToInt32(user.FindFirstValue(ClaimTypes.NameIdentifier));
+        }
+
+        // Return a default or error value if user is not authenticated
+        return -1;
+    }
+}

@@ -69,6 +69,20 @@
             <label for="SellersNo">Seller's Number:</label>
             <input type="text" class="form-control" id="SellersNo" @bind="book.SellersNo">
         </div>
+       
+
+        @* <div class="form-group">
+            <label for="Location" class="col-sm-4 control-label">Location:</label>
+            <div class="col-sm-8">
+                <select class="form-control" id="location" @bind="book.Location">
+                    <option value="Karachi">Karachi</option>
+                    <option value="Lahore">Lahore</option>
+                    <option value="Islamabad">Islamabad</option>
+                    <option value="Nawabshah">Nawabshah</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+        </div>*@
         <button type="button" class="btn btn-primary" @onclick="UpdateBook">Update</button>
     </form>
 }
@@ -88,13 +102,13 @@
 
     protected override void OnInitialized()
     {
-        // Fetch the list of books for the dropdown
+        // list down book fetching
         books = DALBookListingDetails.GetBookListingDetails();
     }
 
     private void SearchBook()
     {
-        // Implement search logic to find the book by title
+        // find book by title logic
         var foundBook = books.FirstOrDefault(b => b.title == searchTitle);
 
         if (foundBook != null)
@@ -104,8 +118,7 @@
         }
         else
         {
-            // Handle the case where the book is not found
-            // You can display an error message or take appropriate action.
+          
         }
     }
     private void UpdateBook()
@@ -128,8 +141,6 @@
         }
         else
         {
-            // Handle update failure
-            // You can display an error message or take appropriate action.
         }
     }
     

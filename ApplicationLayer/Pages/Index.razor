@@ -7,28 +7,41 @@
 @using System.Collections.Generic
 
 <div class="container mt-1">
-    @if (userIsAuthenticated)
-    {
-        <div class="text-center">
-            <h1>Welcome to Our Bookstore, @userName!</h1>
-        </div>
-    }
-    else
-    {
-        <div class="text-center">
-            <h1>Welcome to Our Bookstore</h1>
-        </div>
-    }
+    <div class="text-center">
+        <h1>Welcome to Our Bookstore@(userIsAuthenticated ? $", {userName}!" : "!")</h1>
+    </div>
+
     <div class="row mt-4">
         <h3>Search for Books</h3>
-        <div class="col-lg-11">
+        <div class="col-lg-6">
             <input class="form-control" @bind="searchQuery" placeholder="Enter book title, author, or other keywords" />
+        </div>
+        <div class="col-lg-3">
+            <select class="form-select" @bind="selectedLocation">
+                <option value="">All Locations</option>
+                <option value="">Nawabshah</option>
+                @foreach (var country in CountryList)
+                {
+                    <option value="@country.Code"> @country.Name </option>
+                }
+
+            </select>
+                @*@if (distinctLocations != null)
+                {
+                    foreach (var location in distinctLocations)
+                    {
+                        <option value="@location">@location</option>
+                    }
+            </select>}*@
+            
         </div>
         <div class="col-lg-1 text-right">
             <button class="btn btn-primary gradient-button" @onclick="SearchBooks">Search</button>
         </div>
     </div>
+
     <div class="mt-3"></div>
+
     <div class="row mt-2">
         @foreach (var book in filteredBooks)
         {
@@ -41,7 +54,6 @@
                         <p class="card-text" style="margin-bottom: 5px;">Price: Rs: @book.price</p>
                         <p class="card-text" style="margin-bottom: 5px;">Availability: @book.availability</p>
                         <a href="/Details/@book.BookId" class="btn gradient-button btn-primary text-lg-end">Details</a>
-
                     </div>
                 </div>
             </div>
@@ -51,7 +63,7 @@
 
 <style>
     .gradient-button {
-        background: linear-gradient(to bottom, #800080, #4B0082);
+        background: linear-gradient(to bottom, #D8A7B1, #EF7C8E);
         color: white;
         border: none;
         padding: 5px 15px;
@@ -60,22 +72,22 @@
     }
 
         .gradient-button:hover {
-            background: linear-gradient(to bottom, #4B0082, #800080);
+            background: linear-gradient(to bottom, #EF7C8E, #D8A7B1);
         }
 </style>
 
 @code {
     private string searchQuery = "";
-    private List<ModelBookListingDetails> books = new List<ModelBookListingDetails>(); // Define books initially
-    private List<ModelBookListingDetails> filteredBooks = new List<ModelBookListingDetails>(); // Define filteredBooks
-
+    private List<ModelBookListingDetails> books = new List<ModelBookListingDetails>();
+    private List<ModelBookListingDetails> filteredBooks = new List<ModelBookListingDetails>();
     private string userName = "Guest";
     private bool userIsAuthenticated = false;
+    private string selectedLocation = "";
+    private List<string> distinctLocations;
 
     protected override async Task OnInitializedAsync()
     {
-        LoadBooks(); // Load books when the component is initialized
-
+        LoadBooks();
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
 
@@ -84,29 +96,77 @@
             userName = user.FindFirst(ClaimTypes.Name)?.Value;
             userIsAuthenticated = true;
         }
+
+        distinctLocations = books.Select(book => book.Location).Distinct().ToList();
     }
 
     private void LoadBooks()
     {
-        // Load books from your data source
         books = DALBookListingDetails.GetBookListingDetails();
-        // Initially, set filteredBooks to contain all books
         filteredBooks = books;
     }
 
     private void SearchBooks()
     {
-        if (string.IsNullOrWhiteSpace(searchQuery))
+        filteredBooks = string.IsNullOrWhiteSpace(searchQuery) && string.IsNullOrWhiteSpace(selectedLocation)
+            ? books
+            : books.Where(book =>
+                (string.IsNullOrWhiteSpace(searchQuery) ||
+                (book.title?.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) == true) ||
+                (book.author?.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) == true)) &&
+                (string.IsNullOrWhiteSpace(selectedLocation) ||
+                (book.Location?.Equals(selectedLocation, StringComparison.OrdinalIgnoreCase) == true)))
+            .ToList();
+    }
+
+    string selectedCountryID;
+
+    string SelectedCountryID
+    {
+        get => selectedCountryID;
+        set { selectedCountryID = value; }
+    }
+
+    List<Country> CountryList = new List<Country>() { new Country("KRH", "Karachi"), new Country("LHR", "lahore"), new Country("Isb", "Islamabad") };
+
+    public class Country
+    {
+
+        public Country(string code, string name)
         {
-            // If no search query is entered, show all books
-            filteredBooks = books;
+            Code = code;
+            Name = name;
         }
-        else
-        {
-            // Filter books based on the search query
-            filteredBooks = books.Where(book =>
-                book.title.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ||
-                book.author.Contains(searchQuery, StringComparison.OrdinalIgnoreCase)).ToList();
-        }
+        public string Code { get; set; }
+        public string Name { get; set; }
+
     }
 }
+
+
+
+
+
+@*string selectedCountryID;
+
+        string SelectedCountryID
+        {
+            get => selectedCountryID;
+            set {selectedCountryID = value;}
+        }
+
+        List<Country> CountryList = new List<Country>() { new Country ("IND", "India"),new Country ("USA", "United States"),new Country ("UK", "United Kingdom")};
+
+        public class Country
+        {
+
+            public Country(string code, string name)
+            {
+                Code = code;
+                Name = name;
+            }
+            public string Code { get; set; }
+            public string Name { get; set; }
+
+        }
+    }*@
